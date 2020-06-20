@@ -54,31 +54,32 @@ impl MyLib {
 
     pub fn func(&mut self, data: &str) -> Result<(), i32> {
 
-        unsafe {
-            let mut write_data_callback = | buffer: &mut [u8] | {
-                buffer.copy_from_slice(data.as_bytes());
-                // callback should return 0 on success
-                0
-            };
+        let mut write_data_callback = | buffer: &mut [u8] | {
+            buffer.copy_from_slice(data.as_bytes());
+            // callback should return 0 on success
+            0
+        };
 
-            // get a function that can be used as a callback
-            let callback = MyLib::get_callback(&write_data_callback);
+        // get a function that can be used as a callback
+        let callback = MyLib::get_callback(&write_data_callback);
 
-            let r = mylibnative::mylib_func(self.get_ctx(),
+        let r = unsafe {
+            mylibnative::mylib_func(self.get_ctx(),
             callback,
-            &mut write_data_callback as *mut _ as *mut c_void,);
+            &mut write_data_callback as *mut _ as *mut c_void,)
+        };
 
-
-            if r != 0 {
-                return Err(r);
-            }
-
-            Ok( () )
+        if r != 0 {
+            return Err(r);
         }
+
+        Ok( () )
+
     }
 
     pub fn print(&mut self) -> Result< (), i32 > {
         let r = unsafe { mylibnative::mylib_print(self.get_ctx()) };
+
         if r != 0 {
             return Err(r);
         }
